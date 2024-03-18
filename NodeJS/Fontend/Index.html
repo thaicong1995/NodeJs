@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .form-container {
+      margin-top: 20px;
+    }
+
+    .form-container input[type="text"], 
+    .form-container input[type="date"], 
+    .form-container input[type="number"] {
+      width: calc(100% - 10px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .form-container button[type="submit"] {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Product Management</h1>
+
+    <table id="product-table">
+        <thead>
+          <tr>
+            <th>Product Code</th>
+            <th>Product Name</th>
+            <th>Product Date</th>
+            <th>Product Origin Price</th>
+            <th>Quantity</th>
+            <th>Product Store Code</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="product-list">
+          <!-- Product items will be inserted here -->
+        </tbody>
+      </table>
+  
+      <div class="form-container" id="product-form">
+        <h2>Add Product</h2>
+        <input type="text" id="product-code" placeholder="Product Code">
+        <input type="text" id="product-name" placeholder="Product Name">
+        <input type="date" id="product-date" placeholder="Product Date">
+        <input type="number" id="product-origin-price" placeholder="Product Origin Price">
+        <input type="number" id="quantity" placeholder="Quantity">
+        <input type="text" id="product-store-code" placeholder="Product Store Code">
+        <button onclick="addProduct()">Add Product</button>
+      </div>
+  </div>
+
+  <script>
+    // Lấy tất cả sản phẩm từ máy chủ Node và hiển thị trên bảng
+    async function getAllProducts() {
+      try {
+        const response = await fetch('http://localhost:3002/products');
+        const data = await response.json();
+        displayProducts(data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Hiển thị danh sách sản phẩm trên bảng
+    function displayProducts(products) {
+      const productList = document.getElementById('product-list');
+      productList.innerHTML = '';
+
+      products.forEach(product => {
+        const row = `
+          <tr>
+            <td>${product.ProductCode}</td>
+            <td>${product.ProductName}</td>
+            <td>${product.ProductDate}</td>
+            <td>${product.ProductOriginPrice}</td>
+            <td>${product.Quantity}</td>
+            <td>${product.ProductStoreCode}</td>
+            <td>
+              <button onclick="updateProduct('${product._id}', '${product.ProductCode}', '${product.ProductName}', '${product.ProductDate}', '${product.ProductOriginPrice}', '${product.Quantity}', '${product.ProductStoreCode}')">Update</button>
+              <button onclick="deleteProduct('${product._id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+        productList.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    // Thêm mới một sản phẩm
+    async function addProduct() {
+      const productCode = document.getElementById('product-code').value;
+      const productName = document.getElementById('product-name').value;
+      const productDate = document.getElementById('product-date').value;
+      const productOriginPrice = document.getElementById('product-origin-price').value;
+      const quantity = document.getElementById('quantity').value;
+      const productStoreCode = document.getElementById('product-store-code').value;
+
+      const productData = {
+        ProductCode: productCode,
+        ProductName: productName,
+        ProductDate: productDate,
+        ProductOriginPrice: productOriginPrice,
+        Quantity: quantity,
+        ProductStoreCode: productStoreCode
+      };
+
+      try {
+        const response = await fetch('http://localhost:3002/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        });
+        if (response.ok) {
+          getAllProducts();
+          console.log('Product added successfully');
+        } else {
+          console.error('Failed to add product');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Xóa một sản phẩm
+    async function deleteProduct(id) {
+      try {
+        const response = await fetch(`http://localhost:3002/products/${id}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          getAllProducts();
+          console.log('Product deleted successfully');
+        } else {
+          console.error('Failed to delete product');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Cập nhật thông tin sản phẩm
+    async function updateProduct(id, code, name, date, price, quantity, storeCode) {
+      document.getElementById('product-code').value = code;
+      document.getElementById('product-name').value = name;
+      document.getElementById('product-date').value = date;
+      document.getElementById('product-origin-price').value = price;
+      document.getElementById('quantity').value = quantity;
+      document.getElementById('product-store-code').value = storeCode;
+
+      // Hủy bỏ sự kiện click cho nút Add Product và thay thế bằng nút Update Product
+      const addButton = document.querySelector('.form-container button');
+      addButton.innerText = 'Update Product';
+      addButton.onclick = async () => {
+        const updatedData = {
+          ProductCode: document.getElementById('product-code').value,
+          ProductName: document.getElementById('product-name').value,
+          ProductDate: document.getElementById('product-date').value,
+          ProductOriginPrice: document.getElementById('product-origin-price').value,
+          Quantity: document.getElementById('quantity').value,
+          ProductStoreCode: document.getElementById('product-store-code').value
+        };
+
+        try {
+          const response = await fetch(`http://localhost:3002/products/${id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+          });
+          if (response.ok) {
+            getAllProducts();
+            console.log('Product updated successfully');
+          } else {
+            console.error('Failed to update product');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+
+        // Đặt lại nút Add Product sau khi cập nhật
+        addButton.innerText = 'Add Product';
+        addButton.onclick = addProduct;
+      };
+    }
+
+    // Load danh sách sản phẩm khi trang được tải
+    window.onload = getAllProducts;
+  </script>
+</body>
+</html>
